@@ -40,9 +40,9 @@ MatErreur mat_allouer(Matrice *res, int nb_lignes, int nb_colonnes)
     /* (1.c) À COMPLÉTER : si nb_lignes ou nb_colonnes n'est pas compris
      *       entre 1 et MAT_DIM_MAX, renvoyer MAT_ERR_ARGUMENT.          */
 
-    if (nb_lignes < 1 || nb_lignes> MAT_DIM_MAX 
-	|| nb_colonnes < 1 || nb_colonnes > MAT_DIM_MAX)
-	return MAT_ERR_ARGUMENT;
+    if (nb_lignes < 1 || nb_lignes > MAT_DIM_MAX
+        || nb_colonnes < 1 || nb_colonnes > MAT_DIM_MAX)
+        return MAT_ERR_ARGUMENT;
     /* FOURNI : tableau des nb_lignes pointeurs de lignes (tous à NULL). */
     int **coef = mat_calloc((size_t)nb_lignes, sizeof *coef);
     if (coef == NULL)
