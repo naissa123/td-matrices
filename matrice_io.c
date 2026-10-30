@@ -61,23 +61,17 @@ MatErreur mat_ecrire(FILE *f, const Matrice *m)
     if (fprintf(f, "%d %d\n", m->nb_lignes, m->nb_colonnes) < 0)
         return MAT_ERR_ECRITURE;
 
-    /* (2.b) À COMPLÉTER : pour chaque ligne i de la matrice :
-     *         - écrire les coefficients séparés par UN espace :
-     *             le premier (j == 0) avec "%d", les autres avec " %d" ;
-     *         - terminer la ligne avec fputc('\n', f) ;
-     *         - si un fprintf renvoie un nombre < 0, ou si fputc
-     *           renvoie EOF : return MAT_ERR_ECRITURE;
-     
-     */
     for (int i = 0; i < m->nb_lignes; i++) {
         for (int j = 0; j < m->nb_colonnes; j++) {
             if (j == 0) { 
                 if(fprintf(f, "%d", m->coef[i][j]) < 0) { 
-                    return MAT_ERR_ECRITURE; } 
+                    return MAT_ERR_ECRITURE; 
+                } 
             }
             else { 
                 if(fprintf(f, " %d", m->coef[i][j]) < 0) { 
-                    return MAT_ERR_ECRITURE; } 
+                    return MAT_ERR_ECRITURE; 
+                } 
             }
         }
         if(fputc('\n',f) == EOF) { return MAT_ERR_ECRITURE; }
@@ -116,7 +110,7 @@ MatErreur mat_lire(FILE *f, Matrice *res)
     err = mat_allouer(&tmp, nb_lignes, nb_colonnes);
     if (err != MAT_OK) return err;
 
-
+    
     for (int i = 0; i < nb_lignes; i++) {
         for (int j = 0; j < nb_colonnes; j++) {
             err = lire_entier(f, &tmp.coef[i][j]);
