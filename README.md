@@ -20,6 +20,102 @@
 
 ### Exercice 1 — Allocation et destruction
 
+#### Code écrit
+
+**1.a — Compléter les messages d'erreur** (`mat_message_erreur`) : deux cas ajoutés au `switch`, sur le modèle des autres, pour que ces codes ne tombent plus dans « erreur inconnue ».
+
+```c
+    case MAT_ERR_DIMENSIONS:  return "dimensions incompatibles";
+    case MAT_ERR_DEPASSEMENT: return "dépassement de capacité (résultat hors de l'intervalle des int)";
+```
+
+**1.b — Écrire `mat_est_valide`** : les quatre conditions sont combinées par `&&`. L'ordre compte : si `m` vaut `NULL`, l'évaluation s'arrête avant de lire `(*m).coef`, ce qui évite un plantage. La notation `(*m).coef` est équivalente à `m->coef` (les parenthèses sont nécessaires car `.` est prioritaire sur `*`).
+
+```c
+    return m != NULL
+        && (*m).coef != NULL
+        && (*m).nb_lignes >= 1 && (*m).nb_lignes <= MAT_DIM_MAX
+        && (*m).nb_colonnes >= 1 && (*m).nb_colonnes <= MAT_DIM_MAX;
+```
+
+**1.c — Refuser les dimensions invalides** (`mat_allouer`) : `*res` a déjà été mis à `MATRICE_VIDE` juste avant, et rien n'est encore alloué, donc on peut sortir directement.
+
+```c
+    if (nb_lignes < 1 || nb_lignes > MAT_DIM_MAX
+        || nb_colonnes < 1 || nb_colonnes > MAT_DIM_MAX)
+        return MAT_ERR_ARGUMENT;
+```
+
+**1.d — Réserver chaque ligne** : chaque ligne est allouée avec `mat_calloc` (coefficients mis à 0). En cas d'échec à la ligne `i`, on rend les lignes `i-1` à `0` déjà obtenues, puis le tableau `coef`, dans cet ordre car les adresses des lignes sont rangées dans `coef`.
+
+```c
+    for (int i = 0; i < nb_lignes; i++) {
+        coef[i] = mat_calloc((size_t)nb_colonnes, sizeof *coef[i]);
+        if (coef[i] == NULL) {
+            /* échec : rendre ce qui a déjà été obtenu */
+            for (int k = i - 1; k >= 0; k--)
+                free(coef[k]);
+            free(coef);
+            return MAT_ERR_ALLOCATION;
+        }
+    }
+```
+
+**1.e — Remplir le résultat** : `*res` n'est rempli qu'une fois toutes les allocations réussies, pour que l'appelant ne reçoive jamais une matrice à moitié construite. La propriété de la mémoire lui est alors transférée (règle R2).
+
+```c
+    (*res).coef = coef;
+    (*res).nb_lignes = nb_lignes;
+    (*res).nb_colonnes = nb_colonnes;
+    return MAT_OK;
+```
+
+**1.f — Écrire `mat_detruire`** : on libère les lignes, puis le tableau qui contient leurs adresses. La ligne fournie `*m = MATRICE_VIDE;` remet ensuite `coef` à `NULL`, ce qui rend un second appel sans effet (règle R6).
+
+```c
+    if ((*m).coef != NULL) {
+        for (int i = 0; i < (*m).nb_lignes; i++)
+            free((*m).coef[i]);
+        free((*m).coef);
+    }
+```
+
+#### Questions de réflexion
+
+**Q3.1** — `mat_detruire` prend un `Matrice *` pour pouvoir modifier la variable de l'appelant : après les `free`, elle la remet à `MATRICE_VIDE`. Avec un passage par valeur, la fonction travaillerait sur une copie : la mémoire serait bien libérée, mais la variable de l'appelant garderait dans `coef` l'adresse d'une zone déjà rendue. Utiliser ensuite cette matrice serait un accès invalide, et un second appel à `mat_detruire` libérerait une deuxième fois la même mémoire (double `free`, comportement indéfini).
+
+**Q3.2** — Une matrice n × p demande 1 + n appels à `calloc` (le tableau de n pointeurs, puis une ligne de p entiers pour chaque ligne) et autant d'appels à `free`. Si la k-ième allocation échoue : pour k = 1, c'est le tableau `coef` qui manque et il n'y a rien à libérer ; pour k ≥ 2, on a obtenu le tableau et k − 2 lignes, donc `mat_allouer` doit faire k − 1 libérations. Par exemple, si la ligne 2 échoue (k = 4), on libère `coef[1]`, `coef[0]` puis `coef`, soit 3 libérations.
+
+**Q3.3** — Après le premier appel, la matrice vaut `MATRICE_VIDE`, donc `coef` vaut `NULL` : au second appel, le test `if ((*m).coef != NULL)` est faux et rien n'est libéré. Ce n'est plus vrai avec une copie `Matrice b = a;` : seul le pointeur `coef` est copié (copie superficielle), et `a` et `b` partagent les mêmes lignes. `mat_detruire(&a)` libère cette mémoire et remet `a` à vide, mais `b` garde les anciennes adresses : `mat_detruire(&b)` libère donc une seconde fois la même mémoire, c'est un double `free`.
+
+**Q3.4** — Cette affectation garantit que toutes les sorties en erreur laissent `*res` vide (règle R3), y compris le refus des dimensions en 1.c, qui a lieu avant toute allocation. Quel que soit le chemin suivi, l'appelant reçoit soit une matrice complète (`MAT_OK`), soit une matrice vide, jamais un contenu indéterminé : il peut toujours appeler `mat_detruire` sans risque. Sans cette ligne, `*res` garderait son ancien contenu (des valeurs quelconques si la variable n'était pas initialisée), et un `mat_detruire` pourrait libérer une adresse invalide.
+
+#### Résultat du test
+
+```text
+=== Exercice 1 : matrice.c ===
+[OK]    (1.a) message pour MAT_ERR_DIMENSIONS
+[OK]    (1.a) message pour MAT_ERR_DEPASSEMENT
+[OK]    (1.b) une matrice 1 x 2 est valide
+[OK]    (1.b) NULL n'est pas valide
+[OK]    (1.b) MATRICE_VIDE n'est pas valide
+[OK]    (1.b) une matrice de 0 ligne n'est pas valide
+=== Exercice 1 : matrice_alloc.c ===
+[OK]    (1.c) mat_allouer refuse 0 ligne
+[OK]    (1.c) mat_allouer refuse -2 colonnes
+[OK]    (1.c) mat_allouer refuse une dimension > MAT_DIM_MAX
+[OK]    (1.e) mat_allouer(&m, 3, 4) renvoie MAT_OK
+[OK]    (1.e) m a 3 lignes et 4 colonnes
+[OK]    (1.d) tous les coefficients valent 0
+[OK]    (1.f) apres mat_detruire, m est vide
+[OK]    (1.f) un second mat_detruire est sans danger
+[OK]    (1.f) mat_detruire(NULL) ne plante pas
+=== Exercice 1 : echecs d'allocation simules ===
+[OK]    (1.d) chaque echec renvoie MAT_ERR_ALLOCATION et laisse *res vide
+
+Bilan : 16 / 16 verifications reussies.
+```
+
 ### Exercice 2 — Entrées-sorties
 
 #### Code écrit
@@ -163,6 +259,20 @@ Bilan : 14 / 14 verifications reussies.
 ### Exercice 4 — Démonstration complète
 
 ## 4. Vérifications mémoire
+
+### test_ex1
+
+```text
+==2508== HEAP SUMMARY:
+==2508==     in use at exit: 0 bytes in 0 blocks
+==2508==   total heap usage: 11 allocs, 11 frees, 1,228 bytes allocated
+==2508==
+==2508== All heap blocks were freed -- no leaks are possible
+==2508==
+==2508== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+Les 11 allocations sont toutes libérées, y compris lors des échecs d'allocation simulés : `mat_allouer` rend bien les lignes déjà obtenues quand une allocation échoue.
 
 ### test_ex2
 
