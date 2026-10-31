@@ -256,6 +256,107 @@ Bilan : 14 / 14 verifications reussies.
 
 ### Exercice 3 — Calcul matriciel
 
+#### Code écrit
+
+**3.a — Contrôler les dimensions de l'addition** (`mat_additionner`) : deux matrices ne s'additionnent que si elles ont le même nombre de lignes **et** le même nombre de colonnes. On ne compare pas `nb_lignes * nb_colonnes` : une 2 × 3 et une 3 × 2 ont 6 coefficients chacune, mais ne s'additionnent pas.
+
+```c
+    if (a->nb_lignes != b->nb_lignes || a->nb_colonnes != b->nb_colonnes)
+        return MAT_ERR_DIMENSIONS;
+```
+
+**3.b — Réserver le résultat** (`mat_additionner`) : `r` est déclarée vide (règle R1), puis allouée avec les dimensions de `a`. Si `mat_allouer` échoue, elle a déjà tout libéré et `r` est vide, donc il n'y a rien à rendre (R3).
+
+```c
+    Matrice r = MATRICE_VIDE;
+    err = mat_allouer(&r, a->nb_lignes, a->nb_colonnes);
+    if (err != MAT_OK)
+        return err;
+```
+
+**3.c — Calculer chaque coefficient** (`mat_additionner`) : la somme est calculée en `long long`. Sans la conversion, `a->coef[i][j] + b->coef[i][j]` serait calculée en `int` et pourrait déborder avant le test `tient_dans_int`.
+
+```c
+    long long s = (long long)a->coef[i][j] + b->coef[i][j];
+```
+
+**3.d — Transférer le résultat** (`mat_additionner`) : `*res` n'est rempli qu'à la fin, quand tous les coefficients sont calculés. L'appelant devient propriétaire de la matrice et devra appeler `mat_detruire` (R2).
+
+```c
+    *res = r;
+    return MAT_OK;
+```
+
+**3.e — Contrôler les dimensions du produit** (`mat_multiplier`) : le produit `a × b` n'existe que si le nombre de colonnes de `a` est égal au nombre de lignes de `b`.
+
+```c
+    if (a->nb_colonnes != b->nb_lignes)
+        return MAT_ERR_DIMENSIONS;
+```
+
+**3.f — Réserver le résultat du produit** (`mat_multiplier`) : si `a` est n × p et `b` est p × q, le résultat est n × q.
+
+```c
+    Matrice r = MATRICE_VIDE;
+    err = mat_allouer(&r, a->nb_lignes, b->nb_colonnes);
+    if (err != MAT_OK)
+        return err;
+```
+
+**3.g — La somme des produits** (`mat_multiplier`) : pour chaque case (i, j), la boucle sur `k` parcourt la ligne i de `a` et la colonne j de `b`. Avant chaque addition, on vérifie que `s + p` ne dépassera pas la capacité d'un `long long`. Comme `r` a déjà été allouée, on la détruit avant de renvoyer l'erreur, sinon elle serait perdue.
+
+```c
+    for (int k = 0; k < a->nb_colonnes; k++) {
+        long long p = (long long)a->coef[i][k] * b->coef[k][j];
+        if ((p > 0 && s > LLONG_MAX - p)
+            || (p < 0 && s < LLONG_MIN - p)) {
+            mat_detruire(&r);
+            return MAT_ERR_DEPASSEMENT;
+        }
+        s += p;
+    }
+```
+
+Exemple de vérification à la main : pour a = (1 2 3 / 4 5 6) et c = (7 8 / 9 10 / 11 12), c₁₁ = 1·7 + 2·9 + 3·11 = 58, ce que le test retrouve.
+
+**3.h — Transférer le résultat** (`mat_multiplier`) : comme en 3.d, `*res = r; return MAT_OK;`.
+
+#### Questions de réflexion
+
+**Q5.1** — Non. Dans `mat_additionner`, `a` est de type `const Matrice *` : c'est la structure qui est constante, donc ses trois champs (`coef`, `nb_lignes`, `nb_colonnes`). Le compilateur refuse `a->nb_lignes = 0;` ou `a->coef = NULL;`. Mais `a->coef` est de type `int **` : les entiers vers lesquels il pointe ne sont pas constants, donc `a->coef[0][0] = 7;` compile sans erreur. Le `const` protège donc les dimensions et l'adresse du tableau, pas les coefficients. Pour que le compilateur refuse cette affectation, il faudrait que les coefficients soient eux-mêmes constants, par exemple un champ de type `const int *const *coef` (ou une copie de ce pointeur de ce type dans la fonction). Dans notre code, c'est donc nous qui respectons la règle R4 : on lit `a->coef[i][j]` mais on n'écrit que dans `r.coef[i][j]`.
+
+**Q5.2** — Mathématiquement, a ← a + b a un sens, mais avec notre implémentation ce serait faux. La première chose que fait `verifier_parametres` est `*res = MATRICE_VIDE;`. Si `res` était `&a`, cette ligne viderait `a` avant le calcul : l'adresse de ses lignes serait perdue (fuite de mémoire) et `a` ne serait plus valide. Et même sans cette ligne, à la fin `*res = r;` écraserait `a.coef` par le nouveau tableau sans libérer l'ancien : encore une fuite. C'est pour cela que `res == a` ou `res == b` renvoie `MAT_ERR_ARGUMENT` sans rien modifier (règle R5), ce que vérifie le test « resultat = entree refuse, a reste intacte ». Pour faire a ← a + b, l'appelant calcule dans une nouvelle matrice, détruit l'ancienne `a`, puis garde le résultat.
+
+**Q5.3** — Pour chaque coefficient du résultat (n × q cases), la boucle sur `k` fait p multiplications. Au total : **n × p × q** multiplications. Pour deux matrices 1000 × 1000 : 1000 × 1000 × 1000 = **10⁹**, soit un milliard de multiplications.
+
+**Q5.4** — En C, le dépassement d'un `int` signé est un **comportement indéfini** : la norme ne dit pas ce qui se passe. Une fois que `int s = a + b;` a débordé, il est trop tard : le résultat peut être n'importe quoi, et le compilateur a le droit de supposer qu'un dépassement n'arrive jamais. Il peut donc considérer que `s < a` est toujours faux (pour b positif) et supprimer le test. De plus, ce test ne marche pas si `b` est négatif. Il faut donc détecter le problème **avant** de calculer. Nous calculons dans un type plus grand (`long long`), où la somme ou le produit de deux `int` ne peut pas déborder, puis nous vérifions que le résultat tient dans un `int` avec `tient_dans_int`.
+
+#### Résultat du test
+
+```text
+=== Exercice 3 : addition ===
+[OK]    (3.a) (2 x 3) + (3 x 2) : MAT_ERR_DIMENSIONS
+[OK]    (3.d) (2 x 3) + (2 x 3) : MAT_OK
+[OK]    (3.c) a + b est correct
+[OK]    a et b n'ont pas ete modifiees
+[OK]    (3.b) le resultat possede sa propre memoire
+[OK]    (3.c) INT_MAX + 1 : MAT_ERR_DEPASSEMENT
+=== Exercice 3 : multiplication ===
+[OK]    (3.e) (2 x 3) x (2 x 3) : MAT_ERR_DIMENSIONS
+[OK]    (3.h) (2 x 3) x (3 x 2) : MAT_OK
+[OK]    (3.g) a x c = (58 64 / 139 154)
+[OK]    (3.f) (3 x 2) x (2 x 3) donne une matrice 3 x 3
+[OK]    a et c n'ont pas ete modifiees
+[OK]    (3.g) 2 x 10^10 depasse INT_MAX : MAT_ERR_DEPASSEMENT
+=== Exercice 3 : cas particuliers ===
+[OK]    resultat = entree refuse, a reste intacte
+[OK]    (3.f) echec d'allocation : MAT_ERR_ALLOCATION, r vide
+
+Bilan : 14 / 14 verifications reussies.
+```
+
+
+
 ### Exercice 4 — Démonstration complète
 
 ## 4. Vérifications mémoire
@@ -290,6 +391,24 @@ Commande : `valgrind --leak-check=full ./test_ex2`
 
 Les 51 allocations sont toutes libérées, y compris pour les six fichiers incorrects et l'échec d'allocation simulé : `mat_lire` détruit bien `tmp` sur chaque chemin d'erreur.
 
+### test_ex3
+
+Commande : `valgrind --leak-check=full ./test_ex3`
+
+```text
+==16206== HEAP SUMMARY:
+==16206==     in use at exit: 0 bytes in 0 blocks
+==16206==   total heap usage: 37 allocs, 37 frees, 1,412 bytes allocated
+==16206==
+==16206== All heap blocks were freed -- no leaks are possible
+==16206==
+==16206== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dépassement et échec d'allocation simulé) : dans `mat_additionner` et `mat_multiplier`, chaque `return` d'erreur placé après `mat_allouer` est précédé de `mat_detruire(&r)`.
+
 ## 5. Démonstration
 
 ## 6. Bilan et difficultés
+
+
