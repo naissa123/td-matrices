@@ -210,6 +210,7 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -g -DMAT_TEST_ALLOC \
 **Q3.3** — Après le premier appel, `coef` vaut `NULL`, donc le deuxième appel ne libère rien. Par contre, avec `Matrice b = a;`, seul le pointeur est copié : `a` et `b` partagent les mêmes lignes. `mat_detruire(&a)` remet `a` à vide mais pas `b`, donc `mat_detruire(&b)` libère une deuxième fois la même mémoire.
 
 **Q3.4** — Comme ça, `*res` est vide dans tous les cas d'erreur, même quand on sort tout de suite à cause de mauvaises dimensions (1.c). L'appelant ne reçoit jamais une matrice avec un contenu au hasard, et il peut toujours appeler `mat_detruire` sans risque.
+
 #### Résultat du test
 
 ```text
@@ -758,10 +759,10 @@ Le calcul matriciel lui-même était simple ; l'essentiel du travail a porté su
 - **Git à plusieurs** : quand un membre avait poussé des modifications, notre `git push` était refusé tant que nous n'avions pas fait `git pull`. 
 - **Tabulations et espaces** : notre code était bien indenté dans l'éditeur mais pas sur GitHub. `cat -A` a montré des tabulations, affichées différemment selon les logiciels.
 
-#### Répartition du travail
+### Répartition du travail
 
 - **Sana BEN CHAABANE** : 
-exercice 3 (matrice_calcul.c, Q5.1 à Q5.4) ; exercice 4 : étape 4.c (main.c), réponse Q6.2;
+exercice 3 (matrice_calcul.c, Q5.1 à Q5.4) ; exercice 4 : étape 4.c (main.c), réponse Q6.2 ;
 Partie Démonstration (scénarios 1 à 10).
 J’ai réalisé aussi les tests, les vérifications avec Valgrind et les scénarios de démonstration.
 
@@ -771,7 +772,7 @@ exercice 1 (`matrice.c`, `matrice_alloc.c`, Q3.1 à Q3.4) ;
 exercice 4 : étapes 4.a et 4.b (`main.c`), réponse Q6.1 ;
 rédaction de la conception.
 
-#### Aides extérieures
+### Aides extérieures
 
 - **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
  J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation.
