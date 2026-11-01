@@ -540,7 +540,14 @@ $ echo $?
 
 Le message indique la cause et les dimensions, et le code de sortie vaut 1 : c'est le comportement attendu.
 
-**4.c — Afficher le résultat** : *à compléter.*
+**4.c — Afficher le résultat** :
+on affiche `r` avec `mat_afficher`.
+Le nom dépend de l'opération. Avec `? :`, on choisit `"R = A + B"` si `addition` vaut 1,
+sinon `"R = A x B"`. On passe `&r` : la fonction reçoit l'adresse de la matrice, sans la copier.
+
+```c
+    mat_afficher(addition ? "R = A + B" : "R = A x B", &r);
+```
 
 **4.d — Signaler le succès** : *à compléter.*
 
@@ -548,7 +555,13 @@ Le message indique la cause et les dimensions, et le code de sortie vaut 1 : c'e
 
 **Q6.1** — La bibliothèque renvoie seulement un code d'erreur, et c'est `main.c` qui décide quoi afficher. Ici on écrit sur `stderr` avec `mat_message_erreur`, en ajoutant le nom du fichier ou les dimensions, que seul `main` connaît. Si `mat_lire` faisait elle-même un `printf`, un programme graphique qui l'utiliserait ne pourrait pas afficher l'erreur dans une fenêtre : la bibliothèque ne serait plus réutilisable.
 
-**Q6.2** — *à compléter.*
+**Q6.2** — Dans `charger`, on lit le fichier. Quand on appelle `fclose`, toute la matrice
+est déjà lue. Si `fclose` échoue, on ne perd rien.
+Dans `sauvegarder`, on écrit le fichier. Les données peuvent rester dans le tampon et
+être vraiment écrites seulement au moment du `fclose`. Si `fclose` échoue (par exemple
+disque plein), le fichier peut être incomplet.
+Il faut donc tester `fclose` dans `sauvegarder`. Sinon, le programme dirait
+« Résultat enregistré » alors que le fichier est faux. C'est la même idée que `fflush` en Q4.4.
 
 **Q6.3** — *à compléter.*
 
@@ -603,12 +616,13 @@ Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dép
 ## 5. Démonstration
 
 ## 6. Bilan et difficultés
+
 #### Répartition du travail
 
-- **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu.
+- **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu (Q5.1 à Q5.4), étape 4.c de l'exercice 4, réponse Q6.2.
 
 #### Aides extérieures
 
-- **Sana BEN CHAABANE (exercice 3)** : Utilisation d’un assistant IA (Claude) pour m’aider à comprendre et corriger certains points techniques : la gestion des dépassements en 3.g, les pointeurs et `const` en Q5.1, ainsi que les dépassements d’entiers en Q5.4 ainsi que pour connaître les commandes nécessaires à la compilation et à l’exécution des tests.
+- **Sana BEN CHAABANE (exercice 3 et Q6.2)** : J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind.
 
 

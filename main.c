@@ -95,7 +95,8 @@ int main(int argc, char *argv[])
 	goto nettoyage;
     }
     /* (4.c) À COMPLÉTER : afficher r (nom "R = A + B" ou "R = A x B").  */
-
+    mat_afficher(addition ? "R = A + B" : "R = A x B",&r);
+    
 
     /* FOURNI : enregistrement de r dans le fichier argv[4]. */
     if (sauvegarder(argv[4], &r) != MAT_OK)
