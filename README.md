@@ -698,6 +698,35 @@ Il manque des coefficients à la fin du fichier. `mat_lire` détruit sa matrice
 locale et renvoie `MAT_ERR_FORMAT`. Le programme s'arrête avec le code 1.
 C'est le comportement attendu.
 
+### Scénario 8 — dossier de sortie inexistant
+
+```text
+$ ./demo_matrices add donnees/A.txt donnees/B.txt pas_de_dossier/R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (4 x 3) :
+        1        2        3
+        4        5        6
+        7        8        9
+       10       11       12
+R = A + B (4 x 3) :
+       26       50       87
+       19       38       17
+       52       96       19
+       10       23        7
+Erreur : impossible de créer "pas_de_dossier/R.txt" : No such file or directory
+$ echo $?
+1
+```
+
+Le calcul réussit, mais le dossier `pas_de_dossier` n'existe pas : `fopen` échoue
+dans `sauvegarder`. Le programme affiche le nom du fichier et la cause, puis
+s'arrête avec le code 1. C'est le comportement attendu. Les trois matrices
+sont libérées au nettoyage (voir Q6.3).
+
 ### Scénario 9 — échec d'allocation
 
 Ce cas ne peut pas être provoqué avec `demo_matrices`. Il est simulé dans
@@ -733,9 +762,8 @@ Le calcul matriciel lui-même était simple ; l'essentiel du travail a porté su
 
 - **Sana BEN CHAABANE** : 
 exercice 3 (matrice_calcul.c, Q5.1 à Q5.4) ; exercice 4 : étape 4.c (main.c), réponse Q6.2;
-Partie Démonstration (scénarios 1 à 10)
-
- J’ai réalisé aussi les tests, les vérifications avec Valgrind et les scénarios de démonstration.
+Partie Démonstration (scénarios 1 à 10).
+J’ai réalisé aussi les tests, les vérifications avec Valgrind et les scénarios de démonstration.
 
 - **Nour AISSA** :
 mise en place du dépôt GitHub (`Makefile`, `.gitignore`, vérification automatique) ;
