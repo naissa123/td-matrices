@@ -907,6 +907,8 @@ rédaction de la conception.
 exercice 2 (`matrice_io.c`, étapes 2.a à 2.f, Q4.1 à Q4.4, section du compte rendu de l'exercice 2) ;
 exercice 4 : étape 4.d (`main.c`), réponse Q6.3 ;
 structure du compte rendu : plan, squelette et mise en page du `README.md` (titres, table des matières, emplacements des réponses), pour que chaque membre n'ait plus qu'à y rédiger sa partie.
+rédaction de l'introduction ;
+vérifications mémoire de `test_ex2` et de `demo_matrices` (cas réussi et cas d'erreur).
 
 ### Aides extérieures
 
