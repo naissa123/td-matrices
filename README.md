@@ -614,15 +614,42 @@ Commande : `valgrind --leak-check=full ./test_ex3`
 Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dépassement et échec d'allocation simulé) : dans `mat_additionner` et `mat_multiplier`, chaque `return` d'erreur placé après `mat_allouer` est précédé de `mat_detruire(&r)`.
 
 ## 5. Démonstration
+Nous avons lancé `demo_matrices` sur plusieurs scénarios du sujet. Pour chacun : la
+commande, la sortie, et le code de retour avec `echo $?`.
+
+### Scénario 5 — fichier absent
+
+```text
+$ ./demo_matrices add donnees/absent.txt donnees/B.txt R.txt
+Erreur : impossible d'ouvrir "donnees/absent.txt" : No such file or directory
+$ echo $?
+1
+```
+
+Le fichier n'existe pas. Le programme affiche le nom du fichier et la cause donnée par
+le système, puis s'arrête avec le code 1. C'est le comportement attendu.
+
+### Scénario 6 — fichier mal formé
+
+```text
+$ ./demo_matrices add donnees/invalide.txt donnees/B.txt R.txt
+Erreur : lecture de "donnees/invalide.txt" : fichier mal formé
+$ echo $?
+1
+```
+
+Le fichier contient une donnée qui n'est pas un entier. `mat_lire` renvoie
+`MAT_ERR_FORMAT`, et le programme affiche le nom du fichier avec l'erreur, puis
+s'arrête avec le code 1. C'est le comportement attendu.
 
 ## 6. Bilan et difficultés
 
 #### Répartition du travail
 
-- **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu (Q5.1 à Q5.4), étape 4.c de l'exercice 4, réponse Q6.2.
+- **Sana BEN CHAABANE** : - **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu (Q5.1 à Q5.4), étape 4.c de l'exercice 4, réponse Q6.2 et la partie Démonstration (scénarios 5, 6 et 1).
 
 #### Aides extérieures
 
-- **Sana BEN CHAABANE (exercice 3 et Q6.2)** : J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind.
+- **Sana BEN CHAABANE (exercice 3 et Q6.2)** : J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration. 
 
 
