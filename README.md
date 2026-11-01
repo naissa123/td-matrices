@@ -646,10 +646,13 @@ s'arrête avec le code 1. C'est le comportement attendu.
 
 #### Répartition du travail
 
-- **Sana BEN CHAABANE** : - **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu (Q5.1 à Q5.4), étape 4.c de l'exercice 4, réponse Q6.2 et la partie Démonstration (scénarios 5, 6 et 1).
+- **Sana BEN CHAABANE** : 
+exercice 3 (`matrice_calcul.c`, Q5.1 à Q5.4) ; 
+exercice 4 : étape 4.c (`main.c`), réponse Q6.2 et partie Démonstration (scénarios 1, 5 et 6).
 
 #### Aides extérieures
 
-- **Sana BEN CHAABANE (exercice 3 et Q6.2)** : J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration. 
+- **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
+ J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration. 
 
 
