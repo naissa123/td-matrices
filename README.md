@@ -16,6 +16,127 @@
 
 ## 2. Conception
 
+### Schéma des modules
+
+La bibliothèque est formée de quatre modules ; `main.c` (le programme de démonstration) et les programmes de test les utilisent sans contenir aucune logique de matrices eux-mêmes. Une flèche signifie « appelle des fonctions de » :
+
+```text
+                       main.c (demo_matrices)
+           charger / sauvegarder (static), main
+           |              |                |
+           v              v                v
+     matrice_io     matrice_calcul    matrice_alloc
+     mat_lire       mat_additionner   mat_detruire (nettoyage)
+     mat_ecrire     mat_multiplier
+     mat_afficher
+           |              |
+           +------+-------+
+                  v
+            matrice_alloc
+            mat_allouer, mat_detruire
+                  |
+                  v
+               matrice
+     mat_est_valide, mat_message_erreur
+```
+
+- `matrice` contient ce qui est commun à tous : le type `Matrice`, les codes `MatErreur`, `mat_est_valide` (utilisée par `matrice_io` et `matrice_calcul` avant de toucher une matrice) et `mat_message_erreur` (utilisée par `main.c` pour afficher les erreurs).
+- `matrice_alloc` est le seul module qui réserve et libère la mémoire des coefficients : `matrice_io` et `matrice_calcul` passent par `mat_allouer` et `mat_detruire`, sans jamais appeler `calloc` ni `free` directement.
+- `matrice_calcul` n'utilise pas les fichiers : il n'inclut donc pas `matrice_io.h`.
+
+### Graphe des inclusions
+
+Une flèche `X → Y` signifie « X contient `#include "Y"` » :
+
+```text
+matrice_alloc.h   → matrice.h
+matrice_io.h      → matrice.h, <stdio.h>
+matrice_calcul.h  → matrice.h
+
+matrice.c         → matrice.h
+matrice_alloc.c   → matrice_alloc.h
+matrice_io.c      → matrice_io.h, matrice_alloc.h
+matrice_calcul.c  → matrice_calcul.h, matrice_alloc.h
+main.c            → matrice.h, matrice_alloc.h, matrice_io.h, matrice_calcul.h
+```
+
+Le graphe ne contient aucun cycle. Chaque `.c` inclut son propre `.h`, ce qui permet au compilateur de vérifier que les définitions correspondent aux prototypes. `matrice_io.h` inclut `<stdio.h>` car ses prototypes utilisent le type `FILE`.
+
+**Pourquoi le garde `#ifndef` est nécessaire.** `main.c` inclut `matrice.h` directement, mais aussi indirectement via `matrice_alloc.h`, `matrice_io.h` et `matrice_calcul.h` : sans protection, le type `Matrice` et l'énumération `MatErreur` seraient définis quatre fois, ce qui est une erreur de compilation. Chaque en-tête est donc entouré de :
+
+```c
+#ifndef MATRICE_H
+#define MATRICE_H
+/* ... contenu ... */
+#endif
+```
+
+À la première inclusion, `MATRICE_H` n'est pas défini : le contenu est lu et la macro est définie. Aux inclusions suivantes dans le même fichier, `MATRICE_H` existe déjà et tout le contenu est ignoré.
+
+### Règles de propriété de la mémoire
+
+Toutes les fonctions respectent les règles R1 à R7 du sujet. En résumé :
+
+| Règle | Contenu | Où on l'applique |
+|---|---|---|
+| R1 | toute variable `Matrice` est initialisée à `MATRICE_VIDE` | `Matrice a = MATRICE_VIDE, b = ..., r = ...;` dans `main` |
+| R2 | une fonction qui réussit transfère la propriété du résultat à l'appelant, qui doit appeler `mat_detruire` | fin de `mat_allouer`, `mat_lire`, `mat_additionner`, `mat_multiplier` |
+| R3 | une fonction qui échoue laisse `*res` à `MATRICE_VIDE` et a tout libéré | `*res = MATRICE_VIDE;` au début de chaque fonction, `mat_detruire(&tmp)` ou libération des lignes avant chaque `return` d'erreur |
+| R4 | une matrice d'entrée n'est jamais modifiée ni libérée | paramètres `const Matrice *` |
+| R5 | `*res` est un paramètre de sortie, distinct des entrées | `verifier_parametres` refuse `res == a` ou `res == b` |
+| R6 | `mat_detruire` remet la matrice à vide, donc un second appel est sans effet | `*m = MATRICE_VIDE;` à la fin de `mat_detruire` |
+| R7 | un fichier est fermé par le code qui l'a ouvert | `fopen`/`fclose` uniquement dans `charger` et `sauvegarder` (`main.c`) |
+
+**Qui alloue, qui utilise, qui libère.** Dans `demo_matrices`, `a` et `b` sont allouées par `mat_lire`, `r` par `mat_additionner` ou `mat_multiplier`, et toutes les trois sont libérées par `main`, en un seul point de sortie (`nettoyage:`). Grâce à R1 et R6, ce nettoyage n'a pas besoin de savoir quelles matrices ont été créées : `mat_detruire` est sans effet sur une matrice vide.
+
+**Ce que vaut une matrice après un échec.** Toujours `MATRICE_VIDE` : l'appelant ne reçoit jamais une matrice à moitié construite ou à moitié remplie. Pour cela, `mat_allouer` ne remplit `*res` qu'après la dernière allocation réussie, et `mat_lire` lit dans une matrice locale `tmp` qu'elle ne transfère à `*res` qu'à la fin.
+
+### Justification des choix
+
+**Fonctions `static`.** Une fonction interne à un module est déclarée `static` : elle n'est visible que dans son fichier, n'apparaît pas dans le `.h`, et ne peut pas entrer en conflit avec une fonction de même nom ailleurs. C'est le cas de :
+
+| Fonction | Fichier | Rôle |
+|---|---|---|
+| `mat_calloc` | `matrice_alloc.c` | `calloc` instrumenté, pour simuler un manque de mémoire dans les tests |
+| `lire_entier` | `matrice_io.c` | lit un entier en détectant les données invalides |
+| `verifier_parametres` | `matrice_calcul.c` | contrôles communs à l'addition et à la multiplication |
+| `tient_dans_int` | `matrice_calcul.c` | dit si un résultat `long long` tient dans un `int` |
+| `charger`, `sauvegarder` | `main.c` | ouverture, lecture/écriture et fermeture d'un fichier |
+
+**Échec partiel de l'allocation.** Une matrice n × p demande 1 + n allocations (le tableau des pointeurs, puis chaque ligne). Si l'allocation de la ligne `i` échoue, `mat_allouer` libère les lignes `i-1` à `0`, puis le tableau `coef`, dans cet ordre car les adresses des lignes sont rangées dans `coef`. Les programmes de test simulent un échec à chaque allocation possible (grâce à `mat_calloc` et à l'option `-DMAT_TEST_ALLOC`), et valgrind confirme qu'aucune zone n'est perdue.
+
+**Détection du dépassement.** Le dépassement d'un `int` signé est un comportement indéfini en C : il faut le détecter avant qu'il ne se produise. Les calculs sont donc faits en `long long` (la somme ou le produit de deux `int` y tient toujours), puis `tient_dans_int` vérifie que le résultat est entre `INT_MIN` et `INT_MAX`, sinon on renvoie `MAT_ERR_DEPASSEMENT`. Pour le produit, la somme de p produits pourrait dépasser un `long long` : chaque addition est donc vérifiée avant d'être faite (`s > LLONG_MAX - p` ou `s < LLONG_MIN - p`).
+
+**Gestion d'erreurs uniforme.** Toute fonction qui peut échouer renvoie un code `MatErreur` (`MAT_OK` en cas de succès) et n'affiche rien ; le résultat passe par un paramètre de sortie. C'est `main.c` qui affiche les messages, sur `stderr`, grâce à `mat_message_erreur`.
+
+### Compilation
+
+Le `Makefile` compile chaque `.c` séparément en fichier objet, puis fait l'édition de liens. Les programmes de test sont compilés avec `-DMAT_TEST_ALLOC` (simulation d'échec d'allocation) et pas `demo_matrices` : chaque module est donc compilé deux fois, en `module.o` pour la démonstration et en `module.t.o` pour les tests.
+
+```text
+make          # construit demo_matrices, test_ex1, test_ex2 et test_ex3
+make test     # lance les trois tests et affiche leur bilan
+make clean    # supprime les fichiers objets et les exécutables
+```
+
+Équivalent à la main, pour `demo_matrices` :
+
+```text
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -c matrice.c
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -c matrice_alloc.c
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -c matrice_io.c
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -c matrice_calcul.c
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -c main.c
+gcc main.o matrice.o matrice_alloc.o matrice_io.o matrice_calcul.o -o demo_matrices
+```
+
+et pour un test, par exemple :
+
+```text
+gcc -std=c11 -Wall -Wextra -Wpedantic -g -DMAT_TEST_ALLOC \
+    test_ex1.c matrice.c matrice_alloc.c -o test_ex1
+```
+
 ## 3. Réalisation
 
 ### Exercice 1 — Allocation et destruction
