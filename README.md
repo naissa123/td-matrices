@@ -890,12 +890,14 @@ Le calcul matriciel lui-même était simple ; l'essentiel du travail a porté su
 - **Git à plusieurs** : quand un membre avait poussé des modifications, notre `git push` était refusé tant que nous n'avions pas fait `git pull`. 
 - **Tabulations et espaces** : notre code était bien indenté dans l'éditeur mais pas sur GitHub. `cat -A` a montré des tabulations, affichées différemment selon les logiciels.
 
-### Répartition du travail
 
-- **Sana BEN CHAABANE** : 
-exercice 3 (matrice_calcul.c, Q5.1 à Q5.4) ; exercice 4 : étape 4.c (main.c), réponse Q6.2 ;
-Partie Démonstration (scénarios 1 à 10).
-J’ai réalisé aussi les tests, les vérifications avec Valgrind et les scénarios de démonstration.
+
+### Répartition du travail
+ 
+- **Sana BEN CHAABANE** :
+exercice 3 (`matrice_calcul.c`, étapes 3.a à 3.h, Q5.1 à Q5.4, section du compte rendu de l'exercice 3) ;
+exercice 4 : étape 4.c (`main.c`), réponse Q6.2 ;
+partie Démonstration (les 10 scénarios du sujet, avec les commandes, les sorties et les codes de retour).
 
 - **Nour AISSA** :
 mise en place du dépôt GitHub (`Makefile`, `.gitignore`, vérification automatique) ;
@@ -911,9 +913,9 @@ rédaction de l'introduction ;
 vérifications mémoire de `test_ex2` et de `demo_matrices` (cas réussi et cas d'erreur).
 
 ### Aides extérieures
-
+ 
 - **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
- J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation.
+ J'ai utilisé Claude pour m'aider à comprendre certaines consignes du sujet et certains points difficiles (les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, `fclose` en Q6.2), à trouver certaines commandes de compilation, et pour m'aider à rédiger le compte rendu. J'ai écrit mon code. J'ai lancé moi-même les tests, valgrind et les 10 scénarios, et j'ai relu et simplifié les textes.
 
 - **Nour AISSA (exercice 1 ; exercice 4 : étapes 4.a, 4.b et Q6.1 ; conception)** :
 J'ai utilisé Claude pour m'aider à comprendre certaines étapes du sujet et des messages du compilateur, et pour m'aider à rédiger et mettre en forme le compte rendu. J'ai écrit mon code, lancé les tests et valgrind, et relu et adapté les textes ia.
