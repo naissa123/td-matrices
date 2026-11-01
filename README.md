@@ -203,14 +203,13 @@ gcc -std=c11 -Wall -Wextra -Wpedantic -g -DMAT_TEST_ALLOC \
 
 #### Questions de réflexion
 
-**Q3.1** — `mat_detruire` prend un `Matrice *` pour pouvoir modifier la variable de l'appelant : après les `free`, elle la remet à `MATRICE_VIDE`. Avec un passage par valeur, la fonction travaillerait sur une copie : la mémoire serait bien libérée, mais la variable de l'appelant garderait dans `coef` l'adresse d'une zone déjà rendue. Utiliser ensuite cette matrice serait un accès invalide, et un second appel à `mat_detruire` libérerait une deuxième fois la même mémoire (double `free`, comportement indéfini).
+**Q3.1** — Avec un `Matrice *`, la fonction peut modifier la variable de l'appelant et la remettre à `MATRICE_VIDE` après les `free`. Avec un passage par valeur, elle travaillerait sur une copie : la mémoire serait libérée, mais la variable de l'appelant garderait l'ancienne adresse dans `coef`. Un deuxième appel ferait alors un double `free`.
 
-**Q3.2** — Une matrice n × p demande 1 + n appels à `calloc` (le tableau de n pointeurs, puis une ligne de p entiers pour chaque ligne) et autant d'appels à `free`. Si la k-ième allocation échoue : pour k = 1, c'est le tableau `coef` qui manque et il n'y a rien à libérer ; pour k ≥ 2, on a obtenu le tableau et k − 2 lignes, donc `mat_allouer` doit faire k − 1 libérations. Par exemple, si la ligne 2 échoue (k = 4), on libère `coef[1]`, `coef[0]` puis `coef`, soit 3 libérations.
+**Q3.2** — Il faut 1 + n `calloc` (le tableau de pointeurs + une ligne par ligne) et autant de `free`. Si la k-ième allocation échoue, on a déjà obtenu k − 1 zones, donc il faut k − 1 `free` (0 si c'est le tableau `coef` qui échoue).
 
-**Q3.3** — Après le premier appel, la matrice vaut `MATRICE_VIDE`, donc `coef` vaut `NULL` : au second appel, le test `if ((*m).coef != NULL)` est faux et rien n'est libéré. Ce n'est plus vrai avec une copie `Matrice b = a;` : seul le pointeur `coef` est copié (copie superficielle), et `a` et `b` partagent les mêmes lignes. `mat_detruire(&a)` libère cette mémoire et remet `a` à vide, mais `b` garde les anciennes adresses : `mat_detruire(&b)` libère donc une seconde fois la même mémoire, c'est un double `free`.
+**Q3.3** — Après le premier appel, `coef` vaut `NULL`, donc le deuxième appel ne libère rien. Par contre, avec `Matrice b = a;`, seul le pointeur est copié : `a` et `b` partagent les mêmes lignes. `mat_detruire(&a)` remet `a` à vide mais pas `b`, donc `mat_detruire(&b)` libère une deuxième fois la même mémoire.
 
-**Q3.4** — Cette affectation garantit que toutes les sorties en erreur laissent `*res` vide (règle R3), y compris le refus des dimensions en 1.c, qui a lieu avant toute allocation. Quel que soit le chemin suivi, l'appelant reçoit soit une matrice complète (`MAT_OK`), soit une matrice vide, jamais un contenu indéterminé : il peut toujours appeler `mat_detruire` sans risque. Sans cette ligne, `*res` garderait son ancien contenu (des valeurs quelconques si la variable n'était pas initialisée), et un `mat_detruire` pourrait libérer une adresse invalide.
-
+**Q3.4** — Comme ça, `*res` est vide dans tous les cas d'erreur, même quand on sort tout de suite à cause de mauvaises dimensions (1.c). L'appelant ne reçoit jamais une matrice avec un contenu au hasard, et il peut toujours appeler `mat_detruire` sans risque.
 #### Résultat du test
 
 ```text
@@ -547,7 +546,7 @@ Le message indique la cause et les dimensions, et le code de sortie vaut 1 : c'e
 
 #### Questions de réflexion
 
-**Q6.1** — Les fonctions de la bibliothèque (`mat_lire`, `mat_additionner`, …) ne font que renvoyer un code `MatErreur` : elles ne savent pas comment le programme qui les utilise communique avec l'utilisateur. C'est l'appelant qui décide quoi afficher et où. Dans notre `main.c`, c'est un programme en ligne de commande : le message est écrit sur `stderr` grâce à `mat_message_erreur(err)`, et nous le complétons avec des informations que seul `main` connaît (le nom du fichier dans `charger`, les dimensions de A et B à l'étape 4.b). Si `mat_lire` affichait elle-même un message avec `printf`, un programme graphique qui réutiliserait la bibliothèque verrait ce texte partir dans un terminal invisible, au lieu de pouvoir l'afficher dans une fenêtre de dialogue, le traduire ou réessayer avec un autre fichier. Garder la bibliothèque silencieuse la rend donc réutilisable dans n'importe quel programme.
+**Q6.1** — La bibliothèque renvoie seulement un code d'erreur, et c'est `main.c` qui décide quoi afficher. Ici on écrit sur `stderr` avec `mat_message_erreur`, en ajoutant le nom du fichier ou les dimensions, que seul `main` connaît. Si `mat_lire` faisait elle-même un `printf`, un programme graphique qui l'utiliserait ne pourrait pas afficher l'erreur dans une fenêtre : la bibliothèque ne serait plus réutilisable.
 
 **Q6.2** — *à compléter.*
 
