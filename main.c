@@ -104,7 +104,12 @@ int main(int argc, char *argv[])
 
     /* (4.d) À COMPLÉTER : tout a réussi :
      *         - afficher "Résultat enregistré dans \"...\"." ;
-     *         - statut = EXIT_SUCCESS;                                 */
+     *         - statut = EXIT_SUCCESS; */
+
+    printf("Résultat enregistré dans \"%s\".\n", argv[4]);
+    statut = EXIT_SUCCESS;
+     
+     
 
 
 nettoyage:

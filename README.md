@@ -563,7 +563,16 @@ disque plein), le fichier peut être incomplet.
 Il faut donc tester `fclose` dans `sauvegarder`. Sinon, le programme dirait
 « Résultat enregistré » alors que le fichier est faux. C'est la même idée que `fflush` en Q4.4.
 
-**Q6.3** — *à compléter.*
+**Q6.3** — Il faut libérer les trois matrices : `a`, `b` et `r` existent toutes, seul l'enregistrement a échoué. Notre programme le fait avec le point de sortie unique : `goto nettoyage` appelle toujours `mat_detruire` sur `r`, `b` et `a`, et sur une matrice vide cet appel ne fait rien (règle R6). Nous l'avons vérifié avec un dossier de sortie inexistant :
+
+```text
+$ valgrind --leak-check=full ./demo_matrices add donnees/A.txt donnees/B.txt /dossier_absent/R.txt
+Erreur : impossible de créer "/dossier_absent/R.txt" : No such file or directory
+==15547==   total heap usage: 23 allocs, 23 frees, 3,726 bytes allocated
+==15547== All heap blocks were freed -- no leaks are possible
+$ echo $?
+1
+```
 
 ## 4. Vérifications mémoire
 
