@@ -444,13 +444,31 @@ Exemple de vérification à la main : pour a = (1 2 3 / 4 5 6) et c = (7 8 / 9 1
 
 #### Questions de réflexion
 
-**Q5.1** — Non. Dans `mat_additionner`, `a` est de type `const Matrice *` : c'est la structure qui est constante, donc ses trois champs (`coef`, `nb_lignes`, `nb_colonnes`). Le compilateur refuse `a->nb_lignes = 0;` ou `a->coef = NULL;`. Mais `a->coef` est de type `int **` : les entiers vers lesquels il pointe ne sont pas constants, donc `a->coef[0][0] = 7;` compile sans erreur. Le `const` protège donc les dimensions et l'adresse du tableau, pas les coefficients. Pour que le compilateur refuse cette affectation, il faudrait que les coefficients soient eux-mêmes constants, par exemple un champ de type `const int *const *coef` (ou une copie de ce pointeur de ce type dans la fonction). Dans notre code, c'est donc nous qui respectons la règle R4 : on lit `a->coef[i][j]` mais on n'écrit que dans `r.coef[i][j]`.
+**Q5.1** — Non. Le `const` protège seulement la structure : `coef`, `nb_lignes` et
+`nb_colonnes`. Par exemple, on ne peut pas écrire `a->nb_lignes = 0;`.
+Mais `coef` est une adresse. Les nombres ne sont pas dans la structure. Ils ne sont pas `const`.
+Donc on peut écrire `a->coef[0][0] = 7;`.
+Pour l'interdire, il faut mettre les nombres en `const` : `const int *const *coef`.
+Dans notre code, on ne change jamais `a`. On écrit seulement dans `r`.
 
-**Q5.2** — Mathématiquement, a ← a + b a un sens, mais avec notre implémentation ce serait faux. La première chose que fait `verifier_parametres` est `*res = MATRICE_VIDE;`. Si `res` était `&a`, cette ligne viderait `a` avant le calcul : l'adresse de ses lignes serait perdue (fuite de mémoire) et `a` ne serait plus valide. Et même sans cette ligne, à la fin `*res = r;` écraserait `a.coef` par le nouveau tableau sans libérer l'ancien : encore une fuite. C'est pour cela que `res == a` ou `res == b` renvoie `MAT_ERR_ARGUMENT` sans rien modifier (règle R5), ce que vérifie le test « resultat = entree refuse, a reste intacte ». Pour faire a ← a + b, l'appelant calcule dans une nouvelle matrice, détruit l'ancienne `a`, puis garde le résultat.
+**Q5.2** — `verifier_parametres` commence par `*res = MATRICE_VIDE;`.
+Si `res` est `&a`, alors `a` devient vide avant le calcul.
+On perd la mémoire de `a` : c'est une fuite. Et le calcul est faux.
+Alors on refuse ce cas avec `MAT_ERR_ARGUMENT`.
+Pour faire a = a + b, on met le résultat dans une autre matrice. Puis on détruit l'ancienne `a`.
+Le test « resultat = entree refuse, a reste intacte » le vérifie : il affiche [OK].
 
-**Q5.3** — Pour chaque coefficient du résultat (n × q cases), la boucle sur `k` fait p multiplications. Au total : **n × p × q** multiplications. Pour deux matrices 1000 × 1000 : 1000 × 1000 × 1000 = **10⁹**, soit un milliard de multiplications.
+**Q5.3** — Le résultat a n × q cases.
+Pour chaque case, on fait p multiplications.
+Total : n × p × q multiplications.
+Pour 1000 × 1000 : 1000 × 1000 × 1000 = 1 milliard.
 
-**Q5.4** — En C, le dépassement d'un `int` signé est un **comportement indéfini** : la norme ne dit pas ce qui se passe. Une fois que `int s = a + b;` a débordé, il est trop tard : le résultat peut être n'importe quoi, et le compilateur a le droit de supposer qu'un dépassement n'arrive jamais. Il peut donc considérer que `s < a` est toujours faux (pour b positif) et supprimer le test. De plus, ce test ne marche pas si `b` est négatif. Il faut donc détecter le problème **avant** de calculer. Nous calculons dans un type plus grand (`long long`), où la somme ou le produit de deux `int` ne peut pas déborder, puis nous vérifions que le résultat tient dans un `int` avec `tient_dans_int`.
+**Q5.4** — Si un `int` devient trop grand, le résultat est indéfini en C.
+On ne sait pas ce qu'il vaut. Le test `s < a` peut ne pas marcher.
+Il faut donc vérifier avant le calcul.
+Nous calculons avec `long long`, qui est plus grand qu'un `int`.
+Puis `tient_dans_int` vérifie que le résultat rentre dans un `int`.
+Nous l'avons vérifié : le test « INT_MAX + 1 » renvoie bien `MAT_ERR_DEPASSEMENT` ([OK]).
 
 #### Résultat du test
 
@@ -586,5 +604,12 @@ Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dép
 ## 5. Démonstration
 
 ## 6. Bilan et difficultés
+#### Répartition du travail
+
+- **Sana BEN CHAABANE** : exercice 3 (`matrice_calcul.c`) et sa partie du compte rendu.
+
+#### Aides extérieures
+
+- **Sana BEN CHAABANE (exercice 3)** : Utilisation d’un assistant IA (Claude) pour m’aider à comprendre et corriger certains points techniques : la gestion des dépassements en 3.g, les pointeurs et `const` en Q5.1, ainsi que les dépassements d’entiers en Q5.4 ainsi que pour connaître les commandes nécessaires à la compilation et à l’exécution des tests.
 
 

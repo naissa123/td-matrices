@@ -63,7 +63,7 @@ MatErreur mat_additionner(const Matrice *a, const Matrice *b,
         }
     }
 
-    /* (3.d) Transférer le resulat à l'appelant (règle R2)                           */
+    /* (3.d)      */
     *res = r ;
     return MAT_OK  ;
 }
@@ -110,7 +110,7 @@ MatErreur mat_multiplier(const Matrice *a, const Matrice *b,
         }
     }
 
-    /* (3.h) Transférer le résulat à l'appelant (règle R2).    */
+    /* (3.h)  */
     *res = r;
     return MAT_OK;
     
