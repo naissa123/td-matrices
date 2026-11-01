@@ -14,6 +14,13 @@
 
 ## 1. Introduction
 
+Ce TD consiste à écrire en C une petite bibliothèque permettant de créer, lire, écrire, afficher et calculer (somme et produit) des matrices d'entiers de taille quelconque. Le code est découpé en quatre modules, chacun regroupant des fonctions d'un même thème : `matrice` (type `Matrice`, codes d'erreur et outils communs), `matrice_alloc` (création et destruction), `matrice_io` (lecture, écriture et affichage) et `matrice_calcul` (addition et multiplication). Un programme de démonstration, `demo_matrices`, utilise ces modules pour lire deux matrices dans des fichiers, les additionner ou les multiplier, puis afficher et enregistrer le résultat.
+
+Les objectifs du TD sont de séparer l'interface (`.h`) de l'implémentation (`.c`) et de compiler séparément les modules, d'allouer dynamiquement une matrice en gérant l'échec partiel d'une allocation, de respecter des règles de propriété de la mémoire pour éviter toute fuite, de lire et d'écrire des fichiers texte en vérifiant chaque opération, et de traiter les erreurs de façon uniforme.
+
+**Ce qui fonctionne à la remise** : les quatre exercices sont complets. Le code compile sans aucun avertissement avec `gcc -std=c11 -Wall -Wextra -Wpedantic`, les trois programmes de test affichent `16 / 16`, `14 / 14` et `14 / 14`, et `valgrind` ne signale aucune fuite. Le programme `demo_matrices` donne le résultat attendu sur les scénarios du sujet, y compris les cas d'erreur, et la vérification automatique du dépôt GitHub est validée.
+
+
 ## 2. Conception
 
 ### Schéma des modules
@@ -550,7 +557,12 @@ sinon `"R = A x B"`. On passe `&r` : la fonction reçoit l'adresse de la matrice
     mat_afficher(addition ? "R = A + B" : "R = A x B", &r);
 ```
 
-**4.d — Signaler le succès** : *à compléter.*
+**4.d — Signaler le succès** : on n'arrive à cette ligne que si tout a réussi, car chaque erreur précédente saute directement à `nettoyage` avec `goto`. On affiche le nom du fichier enregistré (`argv[4]`), puis on passe `statut` à `EXIT_SUCCESS` : le programme se termine alors avec le code 0. Sans cette étape, `statut` restait à `EXIT_FAILURE` et le programme renvoyait 1 même quand tout réussissait.
+
+```c
+    printf("Résultat enregistré dans \"%s\".\n", argv[4]);
+    statut = EXIT_SUCCESS;
+```
 
 #### Questions de réflexion
 
@@ -781,6 +793,11 @@ exercice 1 (`matrice.c`, `matrice_alloc.c`, Q3.1 à Q3.4) ;
 exercice 4 : étapes 4.a et 4.b (`main.c`), réponse Q6.1 ;
 rédaction de la conception.
 
+- **Tarek BEN AMOR** :
+exercice 2 (`matrice_io.c`, étapes 2.a à 2.f, Q4.1 à Q4.4, section du compte rendu de l'exercice 2) ;
+exercice 4 : étape 4.d (`main.c`), réponse Q6.3 ;
+structure du compte rendu : plan, squelette et mise en page du `README.md` (titres, table des matières, emplacements des réponses), pour que chaque membre n'ait plus qu'à y rédiger sa partie.
+
 ### Aides extérieures
 
 - **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
@@ -788,5 +805,8 @@ rédaction de la conception.
 
 - **Nour AISSA (exercice 1 ; exercice 4 : étapes 4.a, 4.b et Q6.1 ; conception)** :
 J'ai utilisé Claude pour m'aider à comprendre certaines étapes du sujet et des messages du compilateur, et pour m'aider à rédiger et mettre en forme le compte rendu. J'ai écrit mon code, lancé les tests et valgrind, et relu et adapté les textes ia.
+
+- **Tarek BEN AMOR (exercice 2 ; exercice 4 : étape 4.d et Q6.3)** :
+J'ai utilisé Claude pour revoir certaines notions du cours utiles au TD, pour relire mon code et m'expliquer les messages du compilateur et de valgrind. J'ai écrit le code moi-même, étape par étape, et lancé les tests et valgrind. Claude m'a aussi aidé à construire le squelette du compte rendu, et à rédiger et mettre en forme les réponses aux questions de réflexion à partir de mes propres explications.
 
 
