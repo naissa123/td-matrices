@@ -359,6 +359,61 @@ Bilan : 14 / 14 verifications reussies.
 
 ### Exercice 4 — Démonstration complète
 
+#### Code écrit
+
+**4.a — Afficher A et B** : on n'arrive ici que si les deux chargements ont réussi (sinon le `goto nettoyage` fourni a déjà sauté à la fin), donc les deux matrices sont valides. `mat_afficher` attend un pointeur : on lui passe l'adresse des matrices, sans les copier.
+
+```c
+    mat_afficher("A", &a);
+    mat_afficher("B", &b);
+```
+
+**4.b — Calculer le résultat** : l'opérateur `? :` choisit la fonction selon l'opération demandée (`addition` vaut 1 pour `add`, 0 pour `mul`). En cas d'échec, le message est écrit sur `stderr` avec la cause et les dimensions des deux matrices, puis on saute au point de nettoyage unique. `r` est alors resté vide (règle R3) et `statut` vaut encore `EXIT_FAILURE`, donc le programme se termine avec le code 1. Comme `a` et `b` sont des variables `Matrice` et non des pointeurs, on accède à leurs dimensions directement avec `.` (`a.nb_lignes`).
+
+```c
+    MatErreur err = addition ? mat_additionner(&a, &b, &r)
+                             : mat_multiplier(&a, &b, &r);
+    if (err != MAT_OK) {
+        fprintf(stderr, "Erreur : calcul impossible : %s ",
+                mat_message_erreur(err));
+        fprintf(stderr, "(A : %d x %d, B : %d x %d)\n",
+                a.nb_lignes, a.nb_colonnes, b.nb_lignes, b.nb_colonnes);
+        goto nettoyage;
+    }
+```
+
+Premier essai avec deux matrices de dimensions incompatibles (scénario 3) :
+
+```text
+$ ./demo_matrices add donnees/A.txt donnees/C.txt R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (3 x 2) :
+        1        0
+        0        1
+        2       -1
+Erreur : calcul impossible : dimensions incompatibles (A : 4 x 3, B : 3 x 2)
+$ echo $?
+1
+```
+
+Le message indique la cause et les dimensions, et le code de sortie vaut 1 : c'est le comportement attendu.
+
+**4.c — Afficher le résultat** : *à compléter.*
+
+**4.d — Signaler le succès** : *à compléter.*
+
+#### Questions de réflexion
+
+**Q6.1** — Les fonctions de la bibliothèque (`mat_lire`, `mat_additionner`, …) ne font que renvoyer un code `MatErreur` : elles ne savent pas comment le programme qui les utilise communique avec l'utilisateur. C'est l'appelant qui décide quoi afficher et où. Dans notre `main.c`, c'est un programme en ligne de commande : le message est écrit sur `stderr` grâce à `mat_message_erreur(err)`, et nous le complétons avec des informations que seul `main` connaît (le nom du fichier dans `charger`, les dimensions de A et B à l'étape 4.b). Si `mat_lire` affichait elle-même un message avec `printf`, un programme graphique qui réutiliserait la bibliothèque verrait ce texte partir dans un terminal invisible, au lieu de pouvoir l'afficher dans une fenêtre de dialogue, le traduire ou réessayer avec un autre fichier. Garder la bibliothèque silencieuse la rend donc réutilisable dans n'importe quel programme.
+
+**Q6.2** — *à compléter.*
+
+**Q6.3** — *à compléter.*
+
 ## 4. Vérifications mémoire
 
 ### test_ex1
