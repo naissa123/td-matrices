@@ -627,6 +627,92 @@ Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dép
 Nous avons lancé `demo_matrices` sur les scénarios du sujet. Pour chacun : la
 commande, la sortie, et le code de retour avec `echo $?`.
 
+### Scénario 1 — addition réussie
+
+```text
+$ ./demo_matrices add donnees/A.txt donnees/B.txt R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (4 x 3) :
+        1        2        3
+        4        5        6
+        7        8        9
+       10       11       12
+R = A + B (4 x 3) :
+       26       50       87
+       19       38       17
+       52       96       19
+       10       23        7
+Résultat enregistré dans "R.txt".
+$ echo $?
+0
+$ cat R.txt
+4 3
+26 50 87
+19 38 17
+52 96 19
+10 23 7
+```
+
+Le programme affiche A, B et R, puis enregistre R. Le fichier `R.txt` est au
+format canonique : les dimensions sur la première ligne, puis une ligne par
+ligne de la matrice, sans espace en fin de ligne. Le code de retour est 0.
+C'est le comportement attendu.
+
+Le programme peut aussi relire le fichier qu'il a produit :
+
+```text
+$ ./demo_matrices add R.txt R.txt R2.txt
+A (4 x 3) :
+       26       50       87
+       19       38       17
+       52       96       19
+       10       23        7
+B (4 x 3) :
+       26       50       87
+       19       38       17
+       52       96       19
+       10       23        7
+R = A + B (4 x 3) :
+       52      100      174
+       38       76       34
+      104      192       38
+       20       46       14
+Résultat enregistré dans "R2.txt".
+$ echo $?
+0
+```
+
+### Scénario 2 — multiplication réussie
+
+```text
+$ ./demo_matrices mul donnees/A.txt donnees/C.txt R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (3 x 2) :
+        1        0
+        0        1
+        2       -1
+R = A x B (4 x 2) :
+      193      -36
+       37       22
+       65       78
+      -10       17
+Résultat enregistré dans "R.txt".
+$ echo $?
+0
+```
+
+A a 3 colonnes et C a 3 lignes, donc le produit existe et R a les dimensions
+4 × 2. Vérification à la main de la première case : 25 × 1 + 48 × 0 + 84 × 2 = 193.
+Le code de retour est 0. C'est le comportement attendu.
+
 ### Scénario 3 — addition impossible
 
 ```text
