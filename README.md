@@ -644,15 +644,33 @@ s'arrête avec le code 1. C'est le comportement attendu.
 
 ## 6. Bilan et difficultés
 
+### Ce que nous avons compris
+
+Le calcul matriciel lui-même était simple ; l'essentiel du travail a porté sur la mémoire et les erreurs. Nous avons compris qu'une allocation à deux niveaux impose de gérer l'échec partiel (libérer les lignes déjà obtenues, puis le tableau, dans cet ordre), et qu'un programme peut passer tous ses tests tout en ayant des fuites : seul valgrind permet de vérifier que chaque allocation a bien sa libération, y compris sur les chemins d'erreur. Nous avons aussi vu l'intérêt des règles de propriété : comme toute matrice est initialisée à `MATRICE_VIDE` et que `mat_detruire` la remet à vide, le nettoyage final de `main` peut détruire les trois matrices sans savoir lesquelles ont été créées.
+
+### Difficultés rencontrées
+
+- **Git à plusieurs** : quand un membre avait poussé des modifications, notre `git push` était refusé tant que nous n'avions pas fait `git pull`. 
+- **Tabulations et espaces** : notre code était bien indenté dans l'éditeur mais pas sur GitHub. `cat -A` a montré des tabulations, affichées différemment selon les logiciels.
+
 #### Répartition du travail
 
 - **Sana BEN CHAABANE** : 
 exercice 3 (`matrice_calcul.c`, Q5.1 à Q5.4) ; 
 exercice 4 : étape 4.c (`main.c`), réponse Q6.2 et partie Démonstration (scénarios 1, 5 et 6).
 
+- **Nour AISSA** :
+mise en place du dépôt GitHub (`Makefile`, `.gitignore`, vérification automatique) ;
+exercice 1 (`matrice.c`, `matrice_alloc.c`, Q3.1 à Q3.4) ;
+exercice 4 : étapes 4.a et 4.b (`main.c`), réponse Q6.1 ;
+rédaction de la conception.
+
 #### Aides extérieures
 
 - **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
- J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration. 
+ J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration.
+
+- **Nour AISSA (exercice 1 ; exercice 4 : étapes 4.a, 4.b et Q6.1 ; conception)** :
+J'ai utilisé Claude pour m'aider à comprendre certaines étapes du sujet et des messages du compilateur, et pour m'aider à rédiger et mettre en forme le compte rendu. J'ai écrit mon code, lancé les tests et valgrind, et relu et adapté les textes ia.
 
 
