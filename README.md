@@ -614,8 +614,51 @@ Commande : `valgrind --leak-check=full ./test_ex3`
 Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dépassement et échec d'allocation simulé) : dans `mat_additionner` et `mat_multiplier`, chaque `return` d'erreur placé après `mat_allouer` est précédé de `mat_detruire(&r)`.
 
 ## 5. Démonstration
-Nous avons lancé `demo_matrices` sur plusieurs scénarios du sujet. Pour chacun : la
+Nous avons lancé `demo_matrices` sur les scénarios du sujet. Pour chacun : la
 commande, la sortie, et le code de retour avec `echo $?`.
+
+### Scénario 3 — addition impossible
+
+```text
+$ ./demo_matrices add donnees/A.txt donnees/C.txt R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (3 x 2) :
+        1        0
+        0        1
+        2       -1
+Erreur : calcul impossible : dimensions incompatibles (A : 4 x 3, B : 3 x 2)
+$ echo $?
+1
+```
+
+A et C n'ont pas les mêmes dimensions. Le programme affiche les dimensions, ne crée
+pas `R.txt`, et s'arrête avec le code 1. C'est le comportement attendu.
+
+### Scénario 4 — multiplication impossible
+
+```text
+$ ./demo_matrices mul donnees/A.txt donnees/B.txt R.txt
+A (4 x 3) :
+       25       48       84
+       15       33       11
+       45       88       10
+        0       12       -5
+B (4 x 3) :
+        1        2        3
+        4        5        6
+        7        8        9
+       10       11       12
+Erreur : calcul impossible : dimensions incompatibles (A : 4 x 3, B : 4 x 3)
+$ echo $?
+1
+```
+
+A a 3 colonnes et B a 4 lignes : 3 ≠ 4, donc le produit n'existe pas.
+Le programme s'arrête avec le code 1. C'est le comportement attendu.
 
 ### Scénario 5 — fichier absent
 
@@ -642,6 +685,39 @@ Le fichier contient une donnée qui n'est pas un entier. `mat_lire` renvoie
 `MAT_ERR_FORMAT`, et le programme affiche le nom du fichier avec l'erreur, puis
 s'arrête avec le code 1. C'est le comportement attendu.
 
+### Scénario 7 — fichier tronqué
+
+```text
+$ ./demo_matrices add donnees/tronque.txt donnees/B.txt R.txt
+Erreur : lecture de "donnees/tronque.txt" : fichier mal formé
+$ echo $?
+1
+```
+
+Il manque des coefficients à la fin du fichier. `mat_lire` détruit sa matrice
+locale et renvoie `MAT_ERR_FORMAT`. Le programme s'arrête avec le code 1.
+C'est le comportement attendu.
+
+### Scénario 9 — échec d'allocation
+
+Ce cas ne peut pas être provoqué avec `demo_matrices`. Il est simulé dans
+`test_ex2` et `test_ex3` (option `-DMAT_TEST_ALLOC`) : les vérifications
+« (2.d) mat_lire renvoie MAT_ERR_ALLOCATION proprement » et « (3.f) echec
+d'allocation : MAT_ERR_ALLOCATION, r vide » sont [OK], et valgrind ne trouve
+aucune fuite (partie 4).
+
+### Scénario 10 — arguments manquants
+
+```text
+$ ./demo_matrices add donnees/A.txt
+Usage : ./demo_matrices <add|mul> <fichier_A> <fichier_B> <fichier_R>
+$ echo $?
+1
+```
+
+Il manque des arguments. Le programme affiche comment l'utiliser et s'arrête
+avec le code 1. C'est le comportement attendu.
+
 ## 6. Bilan et difficultés
 
 ### Ce que nous avons compris
@@ -656,8 +732,10 @@ Le calcul matriciel lui-même était simple ; l'essentiel du travail a porté su
 #### Répartition du travail
 
 - **Sana BEN CHAABANE** : 
-exercice 3 (`matrice_calcul.c`, Q5.1 à Q5.4) ; 
-exercice 4 : étape 4.c (`main.c`), réponse Q6.2 et partie Démonstration (scénarios 1, 5 et 6).
+exercice 3 (matrice_calcul.c, Q5.1 à Q5.4) ; exercice 4 : étape 4.c (main.c), réponse Q6.2;
+Partie Démonstration (scénarios 1 à 10)
+
+ J’ai réalisé aussi les tests, les vérifications avec Valgrind et les scénarios de démonstration.
 
 - **Nour AISSA** :
 mise en place du dépôt GitHub (`Makefile`, `.gitignore`, vérification automatique) ;
@@ -668,7 +746,7 @@ rédaction de la conception.
 #### Aides extérieures
 
 - **Sana BEN CHAABANE (exercice 3 ; exercice 4 : étape 4.c, Q6.2 et Démonstration)** :
- J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation. J’ai relu mon travail et lancé moi-même les tests et Valgrind et les scénarios de démonstration.
+ J’ai utilisé Claude pour m’aider à comprendre certaines parties difficiles : les dépassements en 3.g et Q5.4, les pointeurs et `const` en Q5.1, et `fclose` en Q6.2. Il m’a aussi aidée à corriger mon code et à trouver certaines commandes de compilation.
 
 - **Nour AISSA (exercice 1 ; exercice 4 : étapes 4.a, 4.b et Q6.1 ; conception)** :
 J'ai utilisé Claude pour m'aider à comprendre certaines étapes du sujet et des messages du compilateur, et pour m'aider à rédiger et mettre en forme le compte rendu. J'ai écrit mon code, lancé les tests et valgrind, et relu et adapté les textes ia.
