@@ -635,6 +635,30 @@ Commande : `valgrind --leak-check=full ./test_ex3`
 
 Les 37 allocations sont toutes libérées, y compris dans les cas d'erreur (dépassement et échec d'allocation simulé) : dans `mat_additionner` et `mat_multiplier`, chaque `return` d'erreur placé après `mat_allouer` est précédé de `mat_detruire(&r)`.
 
+### demo_matrices
+
+Cas réussi (scénario 1) :
+
+```text
+$ valgrind --leak-check=full ./demo_matrices add donnees/A.txt donnees/B.txt R.txt
+Résultat enregistré dans "R.txt".
+==21160==   total heap usage: 22 allocs, 22 frees, 4,216 bytes allocated
+==21160== All heap blocks were freed -- no leaks are possible
+==21160== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+Cas d'erreur (scénario 8 : le calcul réussit mais l'enregistrement échoue) :
+
+```text
+$ valgrind --leak-check=full ./demo_matrices add donnees/A.txt donnees/B.txt /dossier_absent/R.txt
+Erreur : impossible de créer "/dossier_absent/R.txt" : No such file or directory
+==15547==   total heap usage: 23 allocs, 23 frees, 3,726 bytes allocated
+==15547== All heap blocks were freed -- no leaks are possible
+==15547== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+```
+
+Dans les deux cas, toutes les allocations sont libérées : le point de sortie unique `nettoyage` détruit `a`, `b` et `r` quel que soit le chemin suivi.
+
 ## 5. Démonstration
 Nous avons lancé `demo_matrices` sur les scénarios du sujet. Pour chacun : la
 commande, la sortie, et le code de retour avec `echo $?`.
